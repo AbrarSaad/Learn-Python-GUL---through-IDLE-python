@@ -1,0 +1,16 @@
+from tkinter import *
+from tkinter import ttk
+
+root= Tk()
+
+entry1 = ttk.Entry(root,width=40)
+entry1.pack()
+
+button1 = ttk.Button(root,text="Click Me")
+button1.pack()
+
+def buclick():
+    print(entry1.get())
+    entry1.delete(0,END)
+button1.config(command=buclick)
+root.mainloop()
