@@ -1,0 +1,32 @@
+from tkinter import *
+from tkinter import ttk
+
+from coverage.debug import info_header
+
+root= Tk()
+
+entry1 = ttk.Entry(root,width=40)
+entry1.pack()
+
+button1 = ttk.Button(root,text="1")
+button1.pack()
+button2 = ttk.Button(root,text="2")
+button2.pack()
+button3 = ttk.Button(root,text="3")
+button3.pack()
+style =ttk.Style()
+style.theme_use('classic')
+style.configure('TButton',foreground='gold',background='gray')
+button1.configure(style='Info.TButton')
+button2.configure(style='Info.TButton')
+button3.configure(style='Info.TButton')
+
+
+
+def buclick(x):
+    print(x)
+
+button1.config(command= lambda : buclick(1))
+button2.config(command= lambda : buclick(2))
+button3.config(command= lambda : buclick(3))
+root.mainloop()
