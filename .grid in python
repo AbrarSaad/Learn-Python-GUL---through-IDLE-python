@@ -1,0 +1,15 @@
+from tkinter import *
+from tkinter import ttk
+
+root= Tk()
+
+style = ttk.Style()
+style.theme_use('classic')
+
+ttk.Label(root,text="Hello", background="orange", foreground="red", width=20).grid(row=0, column=0, sticky="nsew")
+ttk.Label(root,text="Hello", background="green", foreground="red", width=20).grid(row=1, column=0, sticky="nsew")
+ttk.Label(root,text="Hello", background="yellow", foreground="red", width=20).grid(rows=1, column=1, sticky="nsew")
+
+
+
+root.mainloop()
