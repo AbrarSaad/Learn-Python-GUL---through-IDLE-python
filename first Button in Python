@@ -1,0 +1,13 @@
+import tkinter
+import _tkinter
+from tkinter import *
+from tkinter import ttk
+root = Tk()
+button=ttk.Button(root,text='abrar')
+button.pack()
+
+def BuClick():
+    print("button is clicked")
+    
+button.config(command=BuClick)
+button is clicked
