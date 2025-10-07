@@ -1,1 +1,1 @@
-# Learn-Python-GUL---through-IDLE-python
+# Learn-Python-GUI---through-IDLE-python
