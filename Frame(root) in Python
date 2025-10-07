@@ -1,0 +1,22 @@
+from tkinter import *
+from tkinter import ttk
+root=Tk()
+
+entary = ttk.Entry(root, width=50)
+entary.pack()
+
+f1=ttk.Frame(root)
+f1.config(width=200,height=200)
+f1.pack()
+
+f2=ttk.Frame(root)
+f2.config(width=200,height=200)
+f2.pack()
+
+ttk.Button(f1,text="button1").grid(row=0,column=0)
+ttk.Button(f1,text="button2").grid(row=0,column=3)
+
+ttk.Button(f2,text="button3").pack()
+ttk.Button(f2,text="button4").pack()
+
+root.mainloop()
