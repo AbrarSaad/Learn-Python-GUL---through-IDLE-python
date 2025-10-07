@@ -1,0 +1,45 @@
+import tkinter as tk
+from tkinter import messagebox
+
+# إنشاء نافذة التطبيق
+window = tk.Tk()
+window.title("مثال على RadioButton و CheckButton")
+window.geometry("300x250")
+
+# --- RadioButtons ---
+tk.Label(window, text="اختر لغتك المفضلة:", font=("Arial", 12)).pack()
+
+language_var = tk.StringVar(value="Python")
+
+tk.Radiobutton(window, text="Python", variable=language_var, value="Python").pack(anchor="w")
+tk.Radiobutton(window, text="Java", variable=language_var, value="Java").pack(anchor="w")
+tk.Radiobutton(window, text="C++", variable=language_var, value="C++").pack(anchor="w")
+
+# --- CheckButtons ---
+tk.Label(window, text="\nالمهارات التي تمتلكها:", font=("Arial", 12)).pack()
+
+skill1 = tk.BooleanVar()
+skill2 = tk.BooleanVar()
+skill3 = tk.BooleanVar()
+
+tk.Checkbutton(window, text="البرمجة", variable=skill1).pack(anchor="w")
+tk.Checkbutton(window, text="تحليل البيانات", variable=skill2).pack(anchor="w")
+tk.Checkbutton(window, text="تصميم الواجهات", variable=skill3).pack(anchor="w")
+
+# --- زر لعرض النتائج ---
+def show_result():
+    selected_language = language_var.get()
+    skills = []
+    if skill1.get():
+        skills.append("البرمجة")
+    if skill2.get():
+        skills.append("تحليل البيانات")
+    if skill3.get():
+        skills.append("تصميم الواجهات")
+
+    messagebox.showinfo("النتيجة", f"اللغة المفضلة: {selected_language}\nالمهارات: {', '.join(skills) if skills else 'لا شيء'}")
+
+tk.Button(window, text="عرض النتيجة", command=show_result).pack(pady=10)
+
+# تشغيل التطبيق
+window.mainloop()
