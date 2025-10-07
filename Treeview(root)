@@ -1,0 +1,21 @@
+from tkinter import *
+from tkinter import ttk
+root=Tk()
+tv=ttk.Treeview(root)
+tv.pack()
+tv.heading("#0",text="name")
+tv.insert("",'0','#0',text="Abrar")
+tv.insert("",'1','#1',text="lubna")
+tv.insert("#0",'0','#2',text="jone")
+tv.move('#2','#1','0')
+#tv.delete('#0')
+tv.configure(columns=('age'))
+tv.heading("age",text="Age")
+tv.set("#0",'age',23)
+tv.set("#1",'age',34)
+tv.set("#2",'age',28)
+
+def Selectitem(event):
+    print(tv.selection())
+
+tv.bind('<<TreeviewSelect>>',Selectitem)
