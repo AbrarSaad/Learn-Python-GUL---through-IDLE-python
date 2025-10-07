@@ -1,0 +1,46 @@
+from tkinter import *
+from tkinter import ttk
+from tkinter import messagebox
+
+
+#make empty form
+root = Tk()
+
+#title
+root.title("ticket reservation")
+root.geometry("350x550")
+root.config(background = "#e1d8b2")
+#label
+ttk.Label(root,text="Full Name : ").grid(row=0,column=0,padx=10,pady=10)
+#textbox
+EntryFullName=ttk.Entry(root,width=30,font=('Arial',10))
+EntryFullName.grid(row=0,column=1,columnspan=2,pady=10)
+
+#label
+ttk.Label(root,text="Gender : ").grid(row=1,column=0,padx=10,pady=10)
+
+SpanGender = StringVar()
+#Radiobutton
+ttk.Radiobutton(root,text="Mail",variable=SpanGender).grid(row=1,column=1,padx=10,pady=10)
+ttk.Radiobutton(root,text="Femail",variable=SpanGender).grid(row=1,column=2,padx=10,pady=10)
+
+#Comment
+ttk.Label(root,text="Comments :").grid(row=2,column=0,padx=10,pady=10)
+textComments=Text(root,width=30,font=('Arial',10))
+textComments.grid(row=2,column=1,columnspan=2,padx=10,pady=10,)
+
+#button
+
+buSubmit=Button(root,text="Submit").grid(row=3,column=2,padx=10,pady=10,ipadx=10)
+buList=Button(root,text="List Res.").grid(row=3,column=1,padx=10,pady=10,ipadx=10)
+
+#style
+style=ttk.Style()
+style.theme_use('classic')
+style.configure('TButton',background='#e1d8b2')
+style.configure('TRadiobutton',background='#e1d8b2')
+style.configure('TLabel',background='#e1d8b2')
+
+#
+
+root.mainloop()
