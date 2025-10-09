@@ -3,10 +3,10 @@ import re
 
 root = Tk()
 root.title("3D Smart Calculator")
-root.geometry("320x450")
+root.geometry("385x525")
 root.config(bg="#FFCF71")
 
-EntryNumber = Entry(root, width=16, font=('Arial', 24, 'bold'), bd=5, relief=RIDGE, bg="#eee", justify=RIGHT)
+EntryNumber = Entry(root, width=19, font=('Arial', 24, 'bold'), bd=5, relief=RIDGE, bg="#eee", justify=RIGHT)
 EntryNumber.insert(0, "0")
 EntryNumber.pack(pady=20, ipady=10)
 
