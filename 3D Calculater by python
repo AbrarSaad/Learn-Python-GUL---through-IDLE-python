@@ -1,0 +1,161 @@
+from tkinter import *
+import re
+
+root = Tk()
+root.title("3D Smart Calculator")
+root.geometry("320x450")
+root.config(bg="#FFCF71")
+
+EntryNumber = Entry(root, width=16, font=('Arial', 24, 'bold'), bd=5, relief=RIDGE, bg="#eee", justify=RIGHT)
+EntryNumber.insert(0, "0")
+EntryNumber.pack(pady=20, ipady=10)
+
+after_equal = False
+
+# دالة الضغط على الأزرار أو لوحة المفاتيح
+def btn_click(value):
+    global after_equal
+    current = EntryNumber.get()
+    if after_equal:
+        if value.isdigit() or value == ".":
+            EntryNumber.delete(0, END)
+        after_equal = False
+    if current == "0" and value not in "+-×÷.%":
+        EntryNumber.delete(0, END)
+    EntryNumber.insert(END, value)
+
+def clear():
+    global after_equal
+    EntryNumber.delete(0, END)
+    EntryNumber.insert(0, "0")
+    after_equal = False
+
+def backspace():
+    current = EntryNumber.get()
+    if len(current) > 1:
+        EntryNumber.delete(0, END)
+        EntryNumber.insert(END, current[:-1])
+    else:
+        EntryNumber.delete(0, END)
+        EntryNumber.insert(0, "0")
+
+# تعديل ذكي لتغيير إشارة آخر رقم فقط
+def toggle_sign():
+    expression = EntryNumber.get()
+    # إذا كامل التعبير رقم فقط
+    if expression.replace(".", "", 1).isdigit() or (expression.startswith("-") and expression[1:].replace(".", "", 1).isdigit()):
+        try:
+            result = float(expression) * -1
+            EntryNumber.delete(0, END)
+            EntryNumber.insert(END, str(int(result)) if result.is_integer() else str(result))
+        except ValueError:
+            pass
+    else:
+        # التعامل مع آخر رقم في التعبير
+        numbers = list(re.finditer(r"(\d+(\.\d+)?)$", expression))
+        if numbers:
+            last_number = numbers[-1]
+            start, end = last_number.start(), last_number.end()
+            number_value = expression[start:end]
+            # إضافة - قبل الرقم أو إزالة إذا موجود
+            if start > 0 and expression[start-2:start] == "(-":
+                new_expression = expression[:start-2] + number_value + expression[end:]
+            else:
+                new_expression = expression[:start] + f"(-{number_value})" + expression[end:]
+            EntryNumber.delete(0, END)
+            EntryNumber.insert(END, new_expression)
+
+def calculate():
+    global after_equal
+    expression = EntryNumber.get()
+    try:
+        expression = expression.replace("×", "*").replace("÷", "/").replace("%", "/100")
+        result = eval(expression)
+        EntryNumber.delete(0, END)
+        EntryNumber.insert(END, str(int(result)) if isinstance(result, float) and result.is_integer() else str(result))
+        after_equal = True
+    except:
+        EntryNumber.delete(0, END)
+        EntryNumber.insert(END, "Error")
+        after_equal = True
+
+# دعم لوحة المفاتيح
+def key_press(event):
+    key = event.char
+    if key in "0123456789":
+        btn_click(key)
+    elif key == ".":
+        btn_click(".")
+    elif key in "+-*/":
+        if key == "*":
+            btn_click("×")
+        elif key == "/":
+            btn_click("÷")
+        else:
+            btn_click(key)
+    elif key == "\r":  # Enter
+        calculate()
+    elif key == "\x08":  # Backspace
+        backspace()
+
+root.bind("<Key>", key_press)
+
+button_frame = Frame(root, bg="#FFCF71")
+button_frame.pack()
+
+# دالة لإنشاء زر ثلاثي الأبعاد
+def create_button(text, row, col, bg_color="#FF9D00", fg_color="#000", cmd=None, width=5, height=2):
+    return Button(
+        button_frame,
+        text=text,
+        width=width,
+        height=height,
+        bg=bg_color,
+        fg=fg_color,
+        font=("Arial", 14, "bold"),
+        bd=5,
+        relief=RAISED,               # مظهر ثلاثي الأبعاد
+        command=cmd,
+        activebackground="#ddd",
+        activeforeground="#456882",
+        highlightthickness=3,
+        highlightbackground="#aaa"
+    ).grid(row=row, column=col, padx=5, pady=5)
+
+button_colors = {
+    "operators": "#f5913e",
+    "numbers": "#FFD93D",
+    "special": "#FFD93D"
+}
+
+# row0
+create_button("%", 0, 0, bg_color=button_colors["special"], cmd=lambda: btn_click("%"))
+create_button("C", 0, 1, bg_color=button_colors["special"], cmd=clear)
+create_button("<<", 0, 2, bg_color=button_colors["special"], cmd=backspace)
+create_button("÷", 0, 3, bg_color=button_colors["operators"], fg_color="#fff", cmd=lambda: btn_click("÷"))
+
+# row1
+create_button("7", 1, 0, bg_color=button_colors["numbers"], cmd=lambda: btn_click("7"))
+create_button("8", 1, 1, bg_color=button_colors["numbers"], cmd=lambda: btn_click("8"))
+create_button("9", 1, 2, bg_color=button_colors["numbers"], cmd=lambda: btn_click("9"))
+create_button("×", 1, 3, bg_color=button_colors["operators"], fg_color="#fff", cmd=lambda: btn_click("×"))
+
+# row2
+create_button("4", 2, 0, bg_color=button_colors["numbers"], cmd=lambda: btn_click("4"))
+create_button("5", 2, 1, bg_color=button_colors["numbers"], cmd=lambda: btn_click("5"))
+create_button("6", 2, 2, bg_color=button_colors["numbers"], cmd=lambda: btn_click("6"))
+create_button("-", 2, 3, bg_color=button_colors["operators"], fg_color="#fff", cmd=lambda: btn_click("-"))
+
+# row3
+create_button("1", 3, 0, bg_color=button_colors["numbers"], cmd=lambda: btn_click("1"))
+create_button("2", 3, 1, bg_color=button_colors["numbers"], cmd=lambda: btn_click("2"))
+create_button("3", 3, 2, bg_color=button_colors["numbers"], cmd=lambda: btn_click("3"))
+create_button("+", 3, 3, bg_color=button_colors["operators"], fg_color="#fff", cmd=lambda: btn_click("+"))
+
+# row4
+create_button("+/-", 4, 0, bg_color=button_colors["special"], cmd=toggle_sign)
+create_button("0", 4, 1, bg_color=button_colors["numbers"], cmd=lambda: btn_click("0"))
+create_button(".", 4, 2, bg_color=button_colors["numbers"], cmd=lambda: btn_click("."))
+create_button("=", 4, 3, bg_color=button_colors["operators"], fg_color="#fff", cmd=calculate)
+
+root.mainloop()
