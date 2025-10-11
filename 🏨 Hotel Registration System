@@ -1,0 +1,352 @@
+import sqlite3
+from tkinter import *
+from tkinter import ttk, messagebox
+from datetime import datetime
+from PIL import Image, ImageTk, ImageDraw
+from tkcalendar import DateEntry
+import urllib.request
+import io
+
+# ===== إعداد النافذة الرئيسية =====
+root = Tk()
+root.title("🏨 Hotel Registration System")
+root.state("zoomed")
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+
+# ===== خلفية متدرجة =====
+gradient = Canvas(root, width=screen_width, height=screen_height, highlightthickness=0)
+for i in range(screen_height):
+    r = int(30 + (50 - 30) * (i / screen_height))
+    g = int(30 + (50 - 30) * (i / screen_height))
+    b = int(30 + (70 - 30) * (i / screen_height))
+    gradient.create_line(0, i, screen_width, i, fill=f"#{r:02x}{g:02x}{b:02x}")
+gradient.place(x=0, y=0)
+
+# ===== تحميل صورة GIF على اليسار =====
+url_gif = "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNnc4MGt2dXd1ZXJ1ejIwamRvamFkYTRwOXB5M2w1enJueTY2bTQyNiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/IvJZu7TR2qFi53eACD/giphy.gif"
+with urllib.request.urlopen(url_gif) as u:
+    raw_data = u.read()
+im = Image.open(io.BytesIO(raw_data))
+frames = []
+try:
+    while True:
+        frame = im.copy().resize((int(screen_width * 0.35), screen_height))
+        frames.append(ImageTk.PhotoImage(frame))
+        im.seek(len(frames))
+except EOFError:
+    pass
+
+left_label = Label(root, bg="#1E1E2F")
+left_label.place(x=0, y=0, width=int(screen_width * 0.35), height=screen_height)
+
+def animate(index):
+    left_label.configure(image=frames[index])
+    root.after(100, animate, (index + 1) % len(frames))
+animate(0)
+
+# ===== الفورم الرئيسي =====
+glass_frame = Frame(root, bg="#1E1E2F", bd=0, highlightthickness=0)
+glass_frame.place(relx=0.38, rely=0.05, relwidth=0.6, relheight=0.85)
+
+Label(glass_frame, text="🏨 HOTEL REGISTRATION FORM",
+      font=("Poppins Bold", 28, "bold"), fg="#FFD700", bg="#1E1E2F").pack(pady=15)
+
+form_frame = Frame(glass_frame, bg="#1E1E2F", highlightbackground="#FFD700", highlightthickness=2)
+form_frame.pack(padx=20, pady=10, fill=BOTH, expand=True)
+
+labels_color = "#FFD700"
+entry_width = 30
+Size = 12
+
+def make_label(text, row):
+    Label(form_frame, text=text, font=('Segoe UI', Size, "bold"),
+          fg=labels_color, bg="#1E1E2F").grid(row=row, column=0, padx=15, pady=6, sticky=E)
+
+# ===== إدخالات المستخدم =====
+Ename = Entry(form_frame, width=entry_width, font=("Segoe UI", 12))
+Eemail = Entry(form_frame, width=entry_width, font=("Segoe UI", 12))
+Ephone = Entry(form_frame, width=entry_width, font=("Segoe UI", 12))
+Eaddress = Entry(form_frame, width=entry_width, font=("Segoe UI", 12))
+Eid = Entry(form_frame, width=entry_width, font=("Segoe UI", 12))
+
+make_label("Full Name:", 0)
+Ename.grid(row=0, column=1)
+make_label("Gender:", 1)
+gender_var = StringVar()
+Radiobutton(form_frame, text="Male", variable=gender_var, value="Male", font=("Segoe UI", 12),
+            bg="#1E1E2F", fg="#FFD700", selectcolor="#1E1E2F").grid(row=1, column=1, sticky=W, padx=10)
+Radiobutton(form_frame, text="Female", variable=gender_var, value="Female", font=("Segoe UI", 12),
+            bg="#1E1E2F", fg="#FFD700", selectcolor="#1E1E2F").grid(row=1, column=1, sticky=E, padx=10)
+
+make_label("Email:", 2)
+Eemail.grid(row=2, column=1, padx=10, pady=6)
+make_label("Phone Number:", 3)
+Ephone.grid(row=3, column=1, padx=10, pady=6)
+make_label("Address:", 4)
+Eaddress.grid(row=4, column=1, padx=10, pady=6)
+make_label("ID Number:", 5)
+Eid.grid(row=5, column=1, padx=10, pady=6)
+make_label("Room Type:", 6)
+room_type = StringVar()
+room_combo = ttk.Combobox(form_frame, textvariable=room_type, values=["Single", "Double"], width=28)
+room_combo.grid(row=6, column=1, padx=10, pady=6)
+room_combo.set("Single")
+make_label("Check-In Date:", 7)
+Echeckin = DateEntry(form_frame, width=28, background="#FFD700",
+                     foreground="#1E1E2F", borderwidth=2, date_pattern="yyyy-mm-dd", font=("Segoe UI", 12))
+Echeckin.grid(row=7, column=1, padx=10, pady=6)
+make_label("Check-Out Date:", 8)
+Echeckout = DateEntry(form_frame, width=28, background="#FFD700",
+                      foreground="#1E1E2F", borderwidth=2, date_pattern="yyyy-mm-dd", font=("Segoe UI", 12))
+Echeckout.grid(row=8, column=1, padx=10, pady=6)
+
+# ===== قاعدة البيانات =====
+def setup_db():
+    db = sqlite3.connect("HotelRegistration.db")
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS guests(
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Name TEXT,
+            Gender TEXT,
+            Email TEXT,
+            Phone TEXT,
+            Address TEXT,
+            IDNumber TEXT,
+            RoomType TEXT,
+            CheckIn TEXT,
+            CheckOut TEXT
+        )
+    """)
+    db.commit()
+    db.close()
+
+# ===== وظائف الفورم =====
+def add_guest():
+    name = Ename.get()
+    gender = gender_var.get()
+    email = Eemail.get()
+    phone = Ephone.get()
+    address = Eaddress.get()
+    id_num = Eid.get()
+    room = room_type.get()
+    checkin = Echeckin.get_date().strftime("%Y-%m-%d")
+    checkout = Echeckout.get_date().strftime("%Y-%m-%d")
+
+    if not all([name, gender, email, phone, address, id_num]):
+        messagebox.showwarning("Error", "Please fill all fields.")
+        return
+    if Echeckout.get_date() <= Echeckin.get_date():
+        messagebox.showwarning("Error", "Check-Out must be after Check-In.")
+        return
+
+    db = sqlite3.connect("HotelRegistration.db")
+    db.execute("""
+        INSERT INTO guests(Name, Gender, Email, Phone, Address, IDNumber, RoomType, CheckIn, CheckOut)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (name, gender, email, phone, address, id_num, room, checkin, checkout))
+    db.commit()
+    db.close()
+    messagebox.showinfo("Success", "Guest registered successfully!")
+
+def clear_fields():
+    Ename.delete(0, END)
+    Eemail.delete(0, END)
+    Ephone.delete(0, END)
+    Eaddress.delete(0, END)
+    Eid.delete(0, END)
+    gender_var.set("")
+    room_combo.set("Single")
+    Echeckin.set_date(datetime.now())
+    Echeckout.set_date(datetime.now())
+
+# ===== أزرار Add + Clear + View Guests =====
+btn_frame = Frame(form_frame, bg="#1E1E2F")
+btn_frame.grid(row=9, column=0, columnspan=2, pady=15)
+
+Button(btn_frame, text="Add Guest", command=add_guest, bg="#FFD700", fg="#1E1E2F",
+       font=("Segoe UI", 12, "bold"), relief="flat", padx=10, pady=5).pack(side=LEFT, padx=5)
+Button(btn_frame, text="Clear", command=clear_fields, bg="#FFD700", fg="#1E1E2F",
+       font=("Segoe UI", 12, "bold"), relief="flat", padx=10, pady=5).pack(side=LEFT, padx=5)
+Button(btn_frame, text="View Guests", command=lambda: open_guest_window(), bg="#FFD700", fg="#1E1E2F",
+       font=("Segoe UI", 12, "bold"), relief="flat", padx=10, pady=5).pack(side=LEFT, padx=5)
+
+# ===== نافذة سجل النزلاء منفصلة =====
+def open_guest_window():
+    guest_win = Toplevel(root)
+    guest_win.title("Guest Records")
+    guest_win.state("zoomed")
+    guest_win.config(bg="#1E1E2F")
+
+    frame = Frame(guest_win, bg="#1E1E2F")
+    frame.pack(fill=BOTH, expand=True, padx=10, pady=10)
+
+    columns = ("ID", "Name", "Gender", "Email", "Phone", "Address", "IDNumber", "RoomType", "CheckIn", "CheckOut")
+    tree = ttk.Treeview(frame, columns=columns, show="headings")
+    for col in columns:
+        tree.heading(col, text=col)
+        tree.column(col, anchor=CENTER, width=120)
+
+    v_scroll = ttk.Scrollbar(frame, orient=VERTICAL, command=tree.yview)
+    h_scroll = ttk.Scrollbar(frame, orient=HORIZONTAL, command=tree.xview)
+    tree.configure(yscrollcommand=v_scroll.set, xscrollcommand=h_scroll.set)
+    tree.grid(row=0, column=0, sticky="nsew")
+    v_scroll.grid(row=0, column=1, sticky="ns")
+    h_scroll.grid(row=1, column=0, sticky="ew")
+    frame.rowconfigure(0, weight=1)
+    frame.columnconfigure(0, weight=1)
+
+    def load_data():
+        for row in tree.get_children():
+            tree.delete(row)
+        db = sqlite3.connect("HotelRegistration.db")
+        cursor = db.execute("SELECT * FROM guests")
+        for r in cursor:
+            tree.insert("", END, values=r)
+        db.close()
+    load_data()
+
+    # ===== حذف سجل محدد =====
+    def delete_record():
+        selected = tree.focus()
+        if not selected:
+            messagebox.showwarning("Error", "Select a record to delete.")
+            return
+        values = tree.item(selected, "values")
+        guest_id = values[0]
+        confirm = messagebox.askyesno("Confirm", f"Delete record ID {guest_id}?")
+        if confirm:
+            db = sqlite3.connect("HotelRegistration.db")
+            db.execute("DELETE FROM guests WHERE ID=?", (guest_id,))
+            db.commit()
+            db.close()
+            tree.delete(selected)
+            messagebox.showinfo("Deleted", "Record deleted successfully.")
+
+    # ===== تحرير سجل محدد =====
+    def edit_record():
+        selected = tree.focus()
+        if not selected:
+            messagebox.showwarning("Error", "Select a record to edit.")
+            return
+        values = tree.item(selected, "values")
+        edit_win = Toplevel(guest_win)
+        edit_win.title("Edit Guest")
+        edit_win.config(bg="#1E1E2F")
+        edit_win.geometry("500x600")
+
+        labels = ["Full Name", "Gender", "Email", "Phone Number", "Address", "ID Number", "Room Type", "Check-In", "Check-Out"]
+        entries = []
+
+        for i, label in enumerate(labels):
+            Label(edit_win, text=label, fg="#FFD700", bg="#1E1E2F",
+                  font=("Segoe UI", 12, "bold")).pack(pady=5)
+            if label == "Gender":
+                gender_edit = StringVar()
+                gender_edit.set(values[2])
+                frame_gender = Frame(edit_win, bg="#1E1E2F")
+                frame_gender.pack()
+                Radiobutton(frame_gender, text="Male", variable=gender_edit, value="Male", bg="#1E1E2F",
+                            fg="#FFD700", selectcolor="#1E1E2F").pack(side=LEFT, padx=10)
+                Radiobutton(frame_gender, text="Female", variable=gender_edit, value="Female", bg="#1E1E2F",
+                            fg="#FFD700", selectcolor="#1E1E2F").pack(side=LEFT, padx=10)
+                entries.append(gender_edit)
+            elif label == "Room Type":
+                room_edit = StringVar()
+                room_edit.set(values[7])
+                room_combo_edit = ttk.Combobox(edit_win, textvariable=room_edit, values=["Single", "Double"], width=25)
+                room_combo_edit.pack(pady=5)
+                entries.append(room_edit)
+            elif label == "Check-In":
+                checkin_edit = DateEntry(edit_win, width=25, background="#FFD700", foreground="#1E1E2F",
+                                         borderwidth=2, date_pattern="yyyy-mm-dd")
+                checkin_edit.set_date(values[8])
+                checkin_edit.pack(pady=5)
+                entries.append(checkin_edit)
+            elif label == "Check-Out":
+                checkout_edit = DateEntry(edit_win, width=25, background="#FFD700", foreground="#1E1E2F",
+                                          borderwidth=2, date_pattern="yyyy-mm-dd")
+                checkout_edit.set_date(values[9])
+                checkout_edit.pack(pady=5)
+                entries.append(checkout_edit)
+            else:
+                e = Entry(edit_win, width=30)
+                e.insert(0, values[i+1])
+                e.pack(pady=5)
+                entries.append(e)
+
+        def save_changes():
+            new_values = []
+            for val in entries:
+                if isinstance(val, (Entry, DateEntry)):
+                    new_values.append(val.get())
+                elif isinstance(val, StringVar):
+                    new_values.append(val.get())
+            db = sqlite3.connect("HotelRegistration.db")
+            db.execute("""
+                UPDATE guests SET Name=?, Gender=?, Email=?, Phone=?, Address=?, IDNumber=?, RoomType=?, CheckIn=?, CheckOut=?
+                WHERE ID=?
+            """, (*new_values, values[0]))
+            db.commit()
+            db.close()
+            load_data()
+            messagebox.showinfo("Updated", "Guest record updated successfully!")
+            edit_win.destroy()
+
+        Button(edit_win, text="Save Changes", command=save_changes, bg="#FFD700", fg="#1E1E2F",
+               font=("Segoe UI", 12, "bold")).pack(pady=10)
+
+    # ===== أزرار Delete, Edit, Refresh =====
+    btn_frame2 = Frame(guest_win, bg="#1E1E2F")
+    btn_frame2.pack(pady=10)
+    Button(btn_frame2, text="Delete Selected", command=delete_record, bg="#FFD700", fg="#1E1E2F",
+           font=("Segoe UI", 12, "bold"), padx=10, pady=5).pack(side=LEFT, padx=5)
+    Button(btn_frame2, text="Edit Selected", command=edit_record, bg="#FFD700", fg="#1E1E2F",
+           font=("Segoe UI", 12, "bold"), padx=10, pady=5).pack(side=LEFT, padx=5)
+    Button(btn_frame2, text="Refresh", command=load_data, bg="#FFD700", fg="#1E1E2F",
+           font=("Segoe UI", 12, "bold"), padx=10, pady=5).pack(side=LEFT, padx=5)
+
+# ===== نافذة المطور =====
+def open_developer_window():
+    dev = Toplevel(root)
+    dev.title("👨‍💻 Developer")
+    dev.state("zoomed")
+    dev.config(bg="white")
+
+    # تحميل الصورة
+    try:
+        img_url = "https://i.ibb.co/gFFrBdXj/your-photo.png"
+        with urllib.request.urlopen(img_url) as u:
+            raw_data = u.read()
+        im = Image.open(io.BytesIO(raw_data)).resize((200, 200))
+        mask = Image.new("L", (200, 200), 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0, 200, 200), fill=255)
+        im.putalpha(mask)
+        photo = ImageTk.PhotoImage(im)
+        Label(dev, image=photo, bg="white").pack(pady=10)
+        dev.image = photo
+    except Exception:
+        Label(dev, text="(Unable to load image)", fg="red", bg="white").pack()
+
+    Label(dev, text="""
+Name: Abrar Saad
+
+Professional Programmer & System Developer with extensive experience
+in multiple programming languages including Python, Java, C++, and web development.
+Skilled in creating desktop applications with elegant and user-friendly interfaces.
+
+📩 Contact:
+Email: wifibaghdad@gmail.com
+""", justify=LEFT, fg="black", bg="white", font=("Segoe UI", 12), padx=15, pady=10).pack(padx=20, pady=10)
+
+# ===== زر المطور بدل مكان Abrar Hotel =====
+dev_btn = Button(root, text="👨‍💻 Developer", command=open_developer_window,
+                 bg="#FFD700", fg="#1E1E2F", font=("Segoe UI", 12, "bold"),
+                 relief="flat")
+dev_btn.place(relx=0.95, rely=0.02, anchor="ne")
+
+# ===== تشغيل قاعدة البيانات =====
+setup_db()
+
+root.mainloop()
