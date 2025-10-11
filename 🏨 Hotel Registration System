@@ -14,7 +14,7 @@ root.state("zoomed")
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
-# ===== خلفية متدرجة =====
+# ===== خلفية متدرجة داكنة =====
 gradient = Canvas(root, width=screen_width, height=screen_height, highlightthickness=0)
 for i in range(screen_height):
     r = int(30 + (50 - 30) * (i / screen_height))
@@ -47,23 +47,23 @@ animate(0)
 
 # ===== الفورم الرئيسي =====
 glass_frame = Frame(root, bg="#1E1E2F", bd=0, highlightthickness=0)
-glass_frame.place(relx=0.38, rely=0.05, relwidth=0.6, relheight=0.85)
+glass_frame.place(relx=0.38, rely=0.05, relwidth=0.6, relheight=0.75)
 
 Label(glass_frame, text="🏨 HOTEL REGISTRATION FORM",
-      font=("Poppins Bold", 28, "bold"), fg="#FFD700", bg="#1E1E2F").pack(pady=15)
+      font=("Poppins Bold", 28, "bold"), fg="#FFD700", bg="#1E1E2F").pack(pady=10)
 
 form_frame = Frame(glass_frame, bg="#1E1E2F", highlightbackground="#FFD700", highlightthickness=2)
-form_frame.pack(padx=20, pady=10, fill=BOTH, expand=True)
+form_frame.pack(padx=20, pady=10, fill=BOTH, expand=True, side=LEFT)
 
+# ===== إدخالات المستخدم =====
 labels_color = "#FFD700"
 entry_width = 30
 Size = 12
 
-def make_label(text, row):
+def make_label(text, row, col=0):
     Label(form_frame, text=text, font=('Segoe UI', Size, "bold"),
-          fg=labels_color, bg="#1E1E2F").grid(row=row, column=0, padx=15, pady=6, sticky=E)
+          fg=labels_color, bg="#1E1E2F").grid(row=row, column=col, padx=15, pady=6, sticky=E)
 
-# ===== إدخالات المستخدم =====
 Ename = Entry(form_frame, width=entry_width, font=("Segoe UI", 12))
 Eemail = Entry(form_frame, width=entry_width, font=("Segoe UI", 12))
 Ephone = Entry(form_frame, width=entry_width, font=("Segoe UI", 12))
@@ -101,6 +101,19 @@ Echeckout = DateEntry(form_frame, width=28, background="#FFD700",
                       foreground="#1E1E2F", borderwidth=2, date_pattern="yyyy-mm-dd", font=("Segoe UI", 12))
 Echeckout.grid(row=8, column=1, padx=10, pady=6)
 
+# ===== اللوغو على اليمين بعيد عن الفورم =====
+logo_frame = Frame(glass_frame, bg="#1E1E2F")
+logo_frame.place(relx=0.65, rely=0.35, width=150, height=150)
+try:
+    logo_url = "https://i.ibb.co/DxspCn9/logo.png"
+    with urllib.request.urlopen(logo_url) as u:
+        raw_data = u.read()
+    logo_img = Image.open(io.BytesIO(raw_data)).resize((150, 150))
+    logo_photo = ImageTk.PhotoImage(logo_img)
+    Label(logo_frame, image=logo_photo, bg="#1E1E2F").pack()
+except:
+    Label(logo_frame, text="Logo Image Here", bg="#1E1E2F", fg="white").pack()
+
 # ===== قاعدة البيانات =====
 def setup_db():
     db = sqlite3.connect("HotelRegistration.db")
@@ -120,6 +133,7 @@ def setup_db():
     """)
     db.commit()
     db.close()
+setup_db()
 
 # ===== وظائف الفورم =====
 def add_guest():
@@ -132,14 +146,12 @@ def add_guest():
     room = room_type.get()
     checkin = Echeckin.get_date().strftime("%Y-%m-%d")
     checkout = Echeckout.get_date().strftime("%Y-%m-%d")
-
     if not all([name, gender, email, phone, address, id_num]):
         messagebox.showwarning("Error", "Please fill all fields.")
         return
     if Echeckout.get_date() <= Echeckin.get_date():
         messagebox.showwarning("Error", "Check-Out must be after Check-In.")
         return
-
     db = sqlite3.connect("HotelRegistration.db")
     db.execute("""
         INSERT INTO guests(Name, Gender, Email, Phone, Address, IDNumber, RoomType, CheckIn, CheckOut)
@@ -160,33 +172,19 @@ def clear_fields():
     Echeckin.set_date(datetime.now())
     Echeckout.set_date(datetime.now())
 
-# ===== أزرار Add + Clear + View Guests =====
-btn_frame = Frame(form_frame, bg="#1E1E2F")
-btn_frame.grid(row=9, column=0, columnspan=2, pady=15)
-
-Button(btn_frame, text="Add Guest", command=add_guest, bg="#FFD700", fg="#1E1E2F",
-       font=("Segoe UI", 12, "bold"), relief="flat", padx=10, pady=5).pack(side=LEFT, padx=5)
-Button(btn_frame, text="Clear", command=clear_fields, bg="#FFD700", fg="#1E1E2F",
-       font=("Segoe UI", 12, "bold"), relief="flat", padx=10, pady=5).pack(side=LEFT, padx=5)
-Button(btn_frame, text="View Guests", command=lambda: open_guest_window(), bg="#FFD700", fg="#1E1E2F",
-       font=("Segoe UI", 12, "bold"), relief="flat", padx=10, pady=5).pack(side=LEFT, padx=5)
-
-# ===== نافذة سجل النزلاء منفصلة =====
+# ===== نافذة سجل النزلاء =====
 def open_guest_window():
     guest_win = Toplevel(root)
     guest_win.title("Guest Records")
     guest_win.state("zoomed")
     guest_win.config(bg="#1E1E2F")
-
     frame = Frame(guest_win, bg="#1E1E2F")
     frame.pack(fill=BOTH, expand=True, padx=10, pady=10)
-
     columns = ("ID", "Name", "Gender", "Email", "Phone", "Address", "IDNumber", "RoomType", "CheckIn", "CheckOut")
     tree = ttk.Treeview(frame, columns=columns, show="headings")
     for col in columns:
         tree.heading(col, text=col)
         tree.column(col, anchor=CENTER, width=120)
-
     v_scroll = ttk.Scrollbar(frame, orient=VERTICAL, command=tree.yview)
     h_scroll = ttk.Scrollbar(frame, orient=HORIZONTAL, command=tree.xview)
     tree.configure(yscrollcommand=v_scroll.set, xscrollcommand=h_scroll.set)
@@ -206,24 +204,21 @@ def open_guest_window():
         db.close()
     load_data()
 
-    # ===== حذف سجل محدد =====
     def delete_record():
         selected = tree.focus()
         if not selected:
             messagebox.showwarning("Error", "Select a record to delete.")
             return
         values = tree.item(selected, "values")
-        guest_id = values[0]
-        confirm = messagebox.askyesno("Confirm", f"Delete record ID {guest_id}?")
+        confirm = messagebox.askyesno("Confirm", f"Delete record ID {values[0]}?")
         if confirm:
             db = sqlite3.connect("HotelRegistration.db")
-            db.execute("DELETE FROM guests WHERE ID=?", (guest_id,))
+            db.execute("DELETE FROM guests WHERE ID=?", (values[0],))
             db.commit()
             db.close()
             tree.delete(selected)
             messagebox.showinfo("Deleted", "Record deleted successfully.")
 
-    # ===== تحرير سجل محدد =====
     def edit_record():
         selected = tree.focus()
         if not selected:
@@ -232,88 +227,65 @@ def open_guest_window():
         values = tree.item(selected, "values")
         edit_win = Toplevel(guest_win)
         edit_win.title("Edit Guest")
+        edit_win.geometry("500x500")
         edit_win.config(bg="#1E1E2F")
-        edit_win.geometry("500x600")
-
-        labels = ["Full Name", "Gender", "Email", "Phone Number", "Address", "ID Number", "Room Type", "Check-In", "Check-Out"]
-        entries = []
-
+        labels = ["Name", "Gender", "Email", "Phone", "Address", "IDNumber", "RoomType", "CheckIn", "CheckOut"]
+        entries = {}
         for i, label in enumerate(labels):
-            Label(edit_win, text=label, fg="#FFD700", bg="#1E1E2F",
-                  font=("Segoe UI", 12, "bold")).pack(pady=5)
+            Label(edit_win, text=label, bg="#1E1E2F", fg="#FFD700").grid(row=i, column=0, sticky=E, padx=10, pady=5)
             if label == "Gender":
-                gender_edit = StringVar()
-                gender_edit.set(values[2])
-                frame_gender = Frame(edit_win, bg="#1E1E2F")
-                frame_gender.pack()
-                Radiobutton(frame_gender, text="Male", variable=gender_edit, value="Male", bg="#1E1E2F",
-                            fg="#FFD700", selectcolor="#1E1E2F").pack(side=LEFT, padx=10)
-                Radiobutton(frame_gender, text="Female", variable=gender_edit, value="Female", bg="#1E1E2F",
-                            fg="#FFD700", selectcolor="#1E1E2F").pack(side=LEFT, padx=10)
-                entries.append(gender_edit)
-            elif label == "Room Type":
-                room_edit = StringVar()
-                room_edit.set(values[7])
-                room_combo_edit = ttk.Combobox(edit_win, textvariable=room_edit, values=["Single", "Double"], width=25)
-                room_combo_edit.pack(pady=5)
-                entries.append(room_edit)
-            elif label == "Check-In":
-                checkin_edit = DateEntry(edit_win, width=25, background="#FFD700", foreground="#1E1E2F",
-                                         borderwidth=2, date_pattern="yyyy-mm-dd")
-                checkin_edit.set_date(values[8])
-                checkin_edit.pack(pady=5)
-                entries.append(checkin_edit)
-            elif label == "Check-Out":
-                checkout_edit = DateEntry(edit_win, width=25, background="#FFD700", foreground="#1E1E2F",
-                                          borderwidth=2, date_pattern="yyyy-mm-dd")
-                checkout_edit.set_date(values[9])
-                checkout_edit.pack(pady=5)
-                entries.append(checkout_edit)
+                var = StringVar(value=values[i+1])
+                entries[label] = var
+                Radiobutton(edit_win, text="Male", variable=var, value="Male", bg="#1E1E2F", fg="#FFD700").grid(row=i, column=1, sticky=W)
+                Radiobutton(edit_win, text="Female", variable=var, value="Female", bg="#1E1E2F", fg="#FFD700").grid(row=i, column=1, sticky=E)
+            elif label == "RoomType":
+                var = StringVar(value=values[i+1])
+                entries[label] = var
+                ttk.Combobox(edit_win, textvariable=var, values=["Single", "Double"], width=25).grid(row=i, column=1, padx=10, pady=5)
+            elif "Date" in label:
+                var = StringVar(value=values[i+1])
+                entries[label] = var
+                DateEntry(edit_win, width=25, background="#FFD700", foreground="#1E1E2F", borderwidth=2, date_pattern="yyyy-mm-dd", font=("Segoe UI", 10), textvariable=var).grid(row=i, column=1, padx=10, pady=5)
             else:
-                e = Entry(edit_win, width=30)
-                e.insert(0, values[i+1])
-                e.pack(pady=5)
-                entries.append(e)
-
+                ent = Entry(edit_win, width=30)
+                ent.grid(row=i, column=1, padx=10, pady=5)
+                ent.insert(0, values[i+1])
+                entries[label] = ent
         def save_changes():
-            new_values = []
-            for val in entries:
-                if isinstance(val, (Entry, DateEntry)):
-                    new_values.append(val.get())
-                elif isinstance(val, StringVar):
-                    new_values.append(val.get())
+            updated = [
+                entries["Name"].get() if isinstance(entries["Name"], Entry) else entries["Name"].get(),
+                entries["Gender"].get(),
+                entries["Email"].get() if isinstance(entries["Email"], Entry) else entries["Email"].get(),
+                entries["Phone"].get() if isinstance(entries["Phone"], Entry) else entries["Phone"].get(),
+                entries["Address"].get() if isinstance(entries["Address"], Entry) else entries["Address"].get(),
+                entries["IDNumber"].get() if isinstance(entries["IDNumber"], Entry) else entries["IDNumber"].get(),
+                entries["RoomType"].get(),
+                entries["CheckIn"].get(),
+                entries["CheckOut"].get()
+            ]
             db = sqlite3.connect("HotelRegistration.db")
             db.execute("""
-                UPDATE guests SET Name=?, Gender=?, Email=?, Phone=?, Address=?, IDNumber=?, RoomType=?, CheckIn=?, CheckOut=?
+                UPDATE guests SET Name=?, Gender=?, Email=?, Phone=?, Address=?, IDNumber=?, RoomType=?, CheckIn=?, CheckOut=? 
                 WHERE ID=?
-            """, (*new_values, values[0]))
+            """, (*updated, values[0]))
             db.commit()
             db.close()
             load_data()
-            messagebox.showinfo("Updated", "Guest record updated successfully!")
+            messagebox.showinfo("Saved", "Changes saved successfully!")
             edit_win.destroy()
+        Button(edit_win, text="Save Changes", command=save_changes, bg="#FFD700", fg="#1E1E2F", font=("Segoe UI", 12, "bold")).grid(row=len(labels), column=0, columnspan=2, pady=15)
 
-        Button(edit_win, text="Save Changes", command=save_changes, bg="#FFD700", fg="#1E1E2F",
-               font=("Segoe UI", 12, "bold")).pack(pady=10)
+    btn_frame = Frame(guest_win, bg="#1E1E2F")
+    btn_frame.pack(pady=10)
+    Button(btn_frame, text="Edit Selected", command=edit_record, bg="#FFD700", fg="#1E1E2F", font=("Segoe UI", 12, "bold"), padx=10).pack(side=LEFT, padx=10)
+    Button(btn_frame, text="Delete Selected", command=delete_record, bg="#FFD700", fg="#1E1E2F", font=("Segoe UI", 12, "bold"), padx=10).pack(side=LEFT, padx=10)
 
-    # ===== أزرار Delete, Edit, Refresh =====
-    btn_frame2 = Frame(guest_win, bg="#1E1E2F")
-    btn_frame2.pack(pady=10)
-    Button(btn_frame2, text="Delete Selected", command=delete_record, bg="#FFD700", fg="#1E1E2F",
-           font=("Segoe UI", 12, "bold"), padx=10, pady=5).pack(side=LEFT, padx=5)
-    Button(btn_frame2, text="Edit Selected", command=edit_record, bg="#FFD700", fg="#1E1E2F",
-           font=("Segoe UI", 12, "bold"), padx=10, pady=5).pack(side=LEFT, padx=5)
-    Button(btn_frame2, text="Refresh", command=load_data, bg="#FFD700", fg="#1E1E2F",
-           font=("Segoe UI", 12, "bold"), padx=10, pady=5).pack(side=LEFT, padx=5)
-
-# ===== نافذة المطور =====
+# ===== نافذة Developer =====
 def open_developer_window():
     dev = Toplevel(root)
     dev.title("👨‍💻 Developer")
     dev.state("zoomed")
     dev.config(bg="white")
-
-    # تحميل الصورة
     try:
         img_url = "https://i.ibb.co/gFFrBdXj/your-photo.png"
         with urllib.request.urlopen(img_url) as u:
@@ -328,7 +300,6 @@ def open_developer_window():
         dev.image = photo
     except Exception:
         Label(dev, text="(Unable to load image)", fg="red", bg="white").pack()
-
     Label(dev, text="""
 Name: Abrar Saad
 
@@ -340,13 +311,13 @@ Skilled in creating desktop applications with elegant and user-friendly interfac
 Email: wifibaghdad@gmail.com
 """, justify=LEFT, fg="black", bg="white", font=("Segoe UI", 12), padx=15, pady=10).pack(padx=20, pady=10)
 
-# ===== زر المطور بدل مكان Abrar Hotel =====
-dev_btn = Button(root, text="👨‍💻 Developer", command=open_developer_window,
-                 bg="#FFD700", fg="#1E1E2F", font=("Segoe UI", 12, "bold"),
-                 relief="flat")
-dev_btn.place(relx=0.95, rely=0.02, anchor="ne")
+# ===== أزرار أسفل الفورم الرئيسي =====
+bottom_btn_frame = Frame(root, bg="#1E1E2F")
+bottom_btn_frame.place(relx=0.38, rely=0.82)
+Button(bottom_btn_frame, text="Tree View", command=open_guest_window, bg="#FFD700", fg="#1E1E2F", font=("Segoe UI", 12, "bold"), padx=15, pady=5).pack(side=LEFT, padx=10)
+Button(bottom_btn_frame, text="Add Guest", command=add_guest, bg="#FFD700", fg="#1E1E2F", font=("Segoe UI", 12, "bold"), padx=15, pady=5).pack(side=LEFT, padx=10)
+Button(bottom_btn_frame, text="Clear Fields", command=clear_fields, bg="#FFD700", fg="#1E1E2F", font=("Segoe UI", 12, "bold"), padx=15, pady=5).pack(side=LEFT, padx=10)
+Button(bottom_btn_frame, text="Developer", command=open_developer_window, bg="#FFD700", fg="#1E1E2F", font=("Segoe UI", 12, "bold"), padx=15, pady=5).pack(side=LEFT, padx=10)
 
-# ===== تشغيل قاعدة البيانات =====
-setup_db()
-
+# ===== تشغيل التطبيق =====
 root.mainloop()
